@@ -170,14 +170,12 @@ void Console::print(std::string value) {
 
 
 Interpreter::Interpreter(AST program) {
-   this->program = program;
-   this->breakLoopFlag = false;
-   this->continueLoopFlag = false;
+  this->program = program;
+  this->breakLoopFlag = false;
+  this->continueLoopFlag = false;
 }
 
-void Interpreter::run() {
-   this->run(program.stmnts);
-}
+void Interpreter::run() { this->run(program.stmnts); }
 
 void Interpreter::run(std::vector<Stmnt*> stmnts) {
    for (auto stmnt = stmnts.begin() ; stmnt != stmnts.end() ; stmnt++) {
@@ -274,10 +272,10 @@ RuntimeVal Interpreter::evaluateComparison(Expr* expr) {
    resultVal.type = NUMBER;
    double& result = resultVal.numberValue;
 
-   RuntimeVal left = this->evaluateBinary(bexpr->left);
-   RuntimeVal right;
-   if (bexpr->right)
-      right = this->evaluateComparison(bexpr->right);
+  RuntimeVal left = this->evaluateBinary(bexpr->left);
+  RuntimeVal right = {};
+  if (bexpr->right)
+    right = this->evaluateComparison(bexpr->right);
 
    switch (bexpr->oper.kind) {
       case TokenKind::EQEQ : {
@@ -307,39 +305,39 @@ RuntimeVal Interpreter::evaluateComparison(Expr* expr) {
    return resultVal;
 }
 
-RuntimeVal Interpreter::evaluateBinary(Expr* expr) {
-   BinaryExpr* bexpr = (BinaryExpr*)expr;
-   RuntimeVal result;
+RuntimeVal Interpreter::evaluateBinary(Expr *expr) {
+  BinaryExpr *bexpr = (BinaryExpr *)expr;
+  RuntimeVal result;
 
-   RuntimeVal left = this->evaluateTerm(bexpr->left);
-   RuntimeVal right;
-   if (bexpr->right)
-      right = this->evaluateBinary(bexpr->right);
+  RuntimeVal left = this->evaluateTerm(bexpr->left);
+  RuntimeVal right = {};
+  if (bexpr->right)
+    right = this->evaluateBinary(bexpr->right);
 
-   switch (bexpr->oper.kind) {
-      case TokenKind::PLUS : {
-         result = left + right;
-         break;
-      }
-      case TokenKind::MINUS : {
-         result = left - right;
-         break;
-      }
-      default: {
-         result = left;
-      }
-   }
-   return result;
+  switch (bexpr->oper.kind) {
+  case TokenKind::PLUS: {
+    result = left + right;
+    break;
+  }
+  case TokenKind::MINUS: {
+    result = left - right;
+    break;
+  }
+  default: {
+    result = left;
+  }
+  }
+  return result;
 }
 
-RuntimeVal Interpreter::evaluateTerm(Expr* expr) {
-   BinaryExpr* bexpr = (BinaryExpr*)expr;
-   RuntimeVal result;
+RuntimeVal Interpreter::evaluateTerm(Expr *expr) {
+  BinaryExpr *bexpr = (BinaryExpr *)expr;
+  RuntimeVal result;
 
-   RuntimeVal left = this->evaluateUnary(bexpr->left);
-   RuntimeVal right;
-   if (bexpr->right)
-      right = this->evaluateTerm(bexpr->right);
+  RuntimeVal left = this->evaluateUnary(bexpr->left);
+  RuntimeVal right = {};
+  if (bexpr->right)
+    right = this->evaluateTerm(bexpr->right);
 
    switch (bexpr->oper.kind) {
       case TokenKind::ASTERISK : {
@@ -357,15 +355,15 @@ RuntimeVal Interpreter::evaluateTerm(Expr* expr) {
    return result;
 }
 
-RuntimeVal Interpreter::evaluateUnary(Expr* expr) {
-   UnaryExpr* uexpr = (UnaryExpr*) expr;
+RuntimeVal Interpreter::evaluateUnary(Expr *expr) {
+  UnaryExpr *uexpr = (UnaryExpr *)expr;
 
    RuntimeVal right = this->evaluatePrimary(&uexpr->right);
    
    if (uexpr->oper.kind == TokenKind::MINUS)
       right.numberValue *= -1;
 
-   return right;
+  return right;
 }
 
 RuntimeVal Interpreter::evaluatePrimary(PrimaryExpr* expr) {
@@ -397,7 +395,7 @@ RuntimeVal Interpreter::evaluatePrimary(PrimaryExpr* expr) {
       }
    }
 
-   return result;
+  return result;
 }
 
 void Interpreter::dumpVars() {

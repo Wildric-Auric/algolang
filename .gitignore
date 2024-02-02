@@ -1,3 +1,4 @@
+format.sh
 build
 *vcx*
 *.sln
