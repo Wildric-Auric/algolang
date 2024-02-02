@@ -4,7 +4,37 @@
 #include "ast.h"
 #include "logger.h"
 
-typedef double RuntimeVal;
+
+
+class RuntimeVal {
+public:
+	void setString(std::string value);
+	void setNumber(double value);
+	double      numberValue = 0.0;
+	std::string stringValue = "";
+	TokenKind   type = NUMBER;
+
+	bool operator== (const RuntimeVal& val);
+	bool operator>= (const RuntimeVal& val);
+	bool operator<= (const RuntimeVal& val);
+	bool operator> (const RuntimeVal& val);
+	bool operator< (const RuntimeVal& val);
+
+	RuntimeVal operator+ (const RuntimeVal& val);
+	RuntimeVal operator- (const RuntimeVal& val);
+	RuntimeVal operator* (const RuntimeVal& val);
+	RuntimeVal operator/ (const RuntimeVal& val);
+
+	static std::vector<std::string> opErrorStack;
+};
+
+class Console { 
+public:
+	void printRuntimeValue(RuntimeVal value);
+	void print(std::string value);
+};
+
+
 
 class Interpreter {
 public:
@@ -24,6 +54,7 @@ public:
 private:
    AST program;
    std::unordered_map<std::string, RuntimeVal> variables;
+   Console console;
    Logger _logger;
    int conditionFlag;
    bool breakLoopFlag;

@@ -31,14 +31,8 @@ Stmnt* Parser::statement() {
    else if (this->checkToken(WRITE)) {
       WriteStmnt* writeStmnt = new WriteStmnt();
       this->nextToken();
-      if (this->checkToken(STRING)) {
-         writeStmnt->stringLiteral = std::string(this->curToken.lexeme);
-         this->nextToken();
-      }
-      else {
-         writeStmnt->stringLiteral = "";
-         writeStmnt->expr = this->expression();
-      }
+      writeStmnt->stringLiteral = "";
+      writeStmnt->expr = this->expression();
       stmnt = writeStmnt;
    }
    else if (this->checkToken(READ)) {
@@ -155,6 +149,10 @@ PrimaryExpr Parser::primary() {
       pexpr.value = Token(NONE, "");
       pexpr.expr = this->expression();
       this->match(RIGHTPAR);
+   }
+   else if (this->checkToken(TokenKind::STRING)) {
+       pexpr.value = this->curToken;
+       this->nextToken();
    }
    else {
       _logger.panic("Expected operator operator at " + this->curToken.lexeme);

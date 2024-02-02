@@ -162,7 +162,7 @@ Token Lexer::nextToken() {
          _logger.panic("Unknown symbol : " + toString(this->curChar));
       }
    }
-
+   
    this->nextChar();
    return token;
 }

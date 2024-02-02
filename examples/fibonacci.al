@@ -1,5 +1,3 @@
-#!/usr/bin/algol
-
 n = 1
 
 a = 0

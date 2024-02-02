@@ -95,7 +95,7 @@ public:
    void print();
 
    Expr* expr;
-   std::string stringLiteral;
+   std::string stringLiteral; //Deprecated, a string literal is an expression now
 };
 
 

@@ -1,5 +1,174 @@
 #include "../include/interpreter.h"
 
+
+//RuntimeVal functions-----------------------------
+
+static bool checkType(const RuntimeVal& value0, const RuntimeVal& value1, TokenKind type0, TokenKind type1) {
+    return value0.type == type0 && value1.type == type1;
+}
+
+static std::string repeatString(const std::string& str, int num) {
+    std::string newStr = str;
+    while (--num) newStr += str;
+    return newStr;
+}
+
+bool RuntimeVal::operator== (const RuntimeVal& val) {
+    if (checkType(*this, val, NUMBER, NUMBER) ) 
+        return val.numberValue == this->numberValue;
+    else if (checkType(*this, val, STRING, STRING))
+        return val.stringValue == this->stringValue;
+    else {
+        val.opErrorStack.push_back("Comparaison operation undefined behaviour.");
+        return 0;
+    }
+}
+
+std::vector<std::string> RuntimeVal::opErrorStack;
+
+bool RuntimeVal::operator>= (const RuntimeVal& val) {
+    if (checkType(*this, val, NUMBER, NUMBER))
+        return  this->numberValue >= val.numberValue;
+    else if (checkType(*this, val, STRING, STRING))
+        return this->stringValue >= val.stringValue;
+    else {
+        val.opErrorStack.push_back("Comparaison operation undefined behaviour.");
+        return 0;
+    }
+}
+
+bool RuntimeVal::operator<= (const RuntimeVal& val) {
+    if (checkType(*this, val, NUMBER, NUMBER))
+        return  this->numberValue <= val.numberValue;
+    else if (checkType(*this, val, STRING, STRING))
+        return this->stringValue <= val.stringValue;
+    else {
+        val.opErrorStack.push_back("Comparaison operation undefined behaviour.");
+        return 0;
+    }
+}
+
+bool RuntimeVal::operator> (const RuntimeVal& val)  {
+    if (checkType(*this, val, NUMBER, NUMBER))
+        return  this->numberValue > val.numberValue;
+    else if (checkType(*this, val, STRING, STRING))
+        return val.stringValue > this->stringValue;
+    else {
+        val.opErrorStack.push_back("Comparaison operation undefined behaviour.");
+        return 0;
+    }
+}
+bool RuntimeVal::operator< (const RuntimeVal& val)  {
+    if (checkType(*this, val, NUMBER, NUMBER))
+        return this->numberValue < val.numberValue;
+    else if (checkType(*this, val, STRING, STRING))
+        return this->stringValue < val.stringValue;
+    else {
+        val.opErrorStack.push_back("Comparaison operation undefined behaviour.");
+        return 0;
+    }
+}
+
+
+RuntimeVal RuntimeVal::operator+ (const RuntimeVal& val) {
+    RuntimeVal result;
+    if (checkType(*this, val, NUMBER, NUMBER)) {
+        result.setNumber(this->numberValue + val.numberValue);
+        return result;
+    }
+    else if (checkType(*this, val, STRING, STRING)) {
+        result.setString(this->stringValue + val.stringValue);
+        return result;
+    }
+    else {
+        val.opErrorStack.push_back("Operation between incompatible types");
+        return result;
+    }
+}
+
+RuntimeVal RuntimeVal::operator- (const RuntimeVal& val) {
+    RuntimeVal result;
+    if (checkType(*this, val, NUMBER, NUMBER)) {
+        result.setNumber(this->numberValue - val.numberValue);
+        return result;
+    }
+    else if (checkType(*this, val, STRING, STRING)) {
+        val.opErrorStack.push_back("Operation between incompatible types");
+        return result;
+    }
+    else {
+        val.opErrorStack.push_back("Operation between incompatible types");
+        return result;
+    }
+}
+RuntimeVal RuntimeVal::operator* (const RuntimeVal& val) {
+    RuntimeVal result;
+    if (checkType(*this, val, NUMBER, NUMBER)) {
+        result.setNumber(this->numberValue * val.numberValue);
+       
+    }
+    else if (checkType(*this, val, STRING, STRING)) {
+        val.opErrorStack.push_back("Operation between incompatible types");
+        
+    }
+    else if (checkType(*this, val, NUMBER, STRING)) {
+        int tmp = (int)this->numberValue;
+        result.setString(repeatString(val.stringValue, tmp));
+    }
+    else if (checkType(*this, val, STRING, NUMBER)) {
+        int tmp = (int)val.numberValue;
+        result.setString(repeatString(this->stringValue, tmp));
+    }
+    else {
+        val.opErrorStack.push_back("Operation between incompatible types");  
+    }
+
+    return result;
+}
+RuntimeVal RuntimeVal::operator/ (const RuntimeVal& val) {
+    RuntimeVal result;
+    if (checkType(*this, val, NUMBER, NUMBER)) {
+        if (val.numberValue == 0.0) {
+            val.opErrorStack.push_back("0 division is undefined");
+            return result;
+        }
+        result.setNumber(this->numberValue / val.numberValue);
+        return result;
+    }
+    else if (checkType(*this, val, STRING, STRING)) {
+        val.opErrorStack.push_back("Operation between incompatible types");
+        return result;
+    }
+    else {
+        val.opErrorStack.push_back("Operation between incompatible types");
+        return result;
+    }
+}
+
+
+void RuntimeVal::setString(std::string value) {
+    this->type        = STRING;
+    this->stringValue = value;
+}
+
+void RuntimeVal::setNumber(double value) {
+    this->type        = NUMBER;
+    this->numberValue = value;
+}
+
+//Interpreter------------------------------------
+void Console::printRuntimeValue(RuntimeVal value) {
+    if (value.type == NUMBER) 
+        std::cout << value.numberValue << '\n';
+    else 
+        std::cout << value.stringValue << '\n';
+}
+
+void Console::print(std::string value) {
+    std::cout << value << '\n';
+}
+
+
 Interpreter::Interpreter(AST program) {
    this->program = program;
    this->breakLoopFlag = false;
@@ -22,24 +191,36 @@ void Interpreter::run(std::vector<Stmnt*> stmnts) {
             // TODO : String concatenation (eg : write "Hello" + "world" + x)
             WriteStmnt* writeStmnt = (WriteStmnt*) *stmnt;
             if (writeStmnt->expr != nullptr) {
-               std::cout << this->evaluate(writeStmnt->expr) << std::endl;
+               this->console.printRuntimeValue(this->evaluate(writeStmnt->expr));
             }
             else {
-               std::cout << writeStmnt->stringLiteral << std::endl; 
+                this->console.print(writeStmnt->stringLiteral); //Deprecated, this branch is never entered now
             }
             break;
          }
          case READSTMNT : {
             ReadStmnt* readStmnt = (ReadStmnt*) *stmnt;
-            RuntimeVal tmp;
+            std::string tmp;
+            RuntimeVal valTmp;
             std::cin >> tmp;
-            this->variables[readStmnt->variable.lexeme] = tmp;
+            try {
+                size_t tmp1;
+                double tmp0 = std::stod(tmp, &tmp1);
+                if (tmp1 >= tmp.size())
+                    valTmp.setNumber(tmp0);
+                else
+                    valTmp.setString(tmp);        
+            }
+            catch (const std::invalid_argument exception) {
+                valTmp.setString(tmp);    
+            }
+            this->variables[readStmnt->variable.lexeme] = valTmp;
             break;
          }
          case IFSTMNT : {
             IfStmnt* ifStmnt = (IfStmnt*) *stmnt;
             RuntimeVal comparisonResult = this->evaluateComparison(ifStmnt->expr);
-            if (comparisonResult) {
+            if (comparisonResult.numberValue) {
                this->run(ifStmnt->stmnts);
             }
             break;
@@ -47,7 +228,7 @@ void Interpreter::run(std::vector<Stmnt*> stmnts) {
          case WHILESTMNT: {
             WhileStmnt* whileStmnt = (WhileStmnt*) *stmnt;
             RuntimeVal comparisonResult = this->evaluateComparison(whileStmnt->expr);
-            if (!comparisonResult) break;
+            if (!comparisonResult.numberValue) break;
             this->run(whileStmnt->stmnts);
             if (breakLoopFlag) {
                breakLoopFlag = false;
@@ -67,6 +248,10 @@ void Interpreter::run(std::vector<Stmnt*> stmnts) {
          }
          default: {}
       }
+      while (!RuntimeVal::opErrorStack.empty()) {
+          _logger.warning(RuntimeVal::opErrorStack.back());
+          RuntimeVal::opErrorStack.pop_back();
+      }
    }
 }
 
@@ -79,13 +264,15 @@ RuntimeVal Interpreter::evaluate(Expr* expr) {
       }
       default : {}
    }
-   
+
    return result;
 }
-
+//DONE
 RuntimeVal Interpreter::evaluateComparison(Expr* expr) {
    BinaryExpr* bexpr = (BinaryExpr*)expr;
-   RuntimeVal result;
+   RuntimeVal resultVal;
+   resultVal.type = NUMBER;
+   double& result = resultVal.numberValue;
 
    RuntimeVal left = this->evaluateBinary(bexpr->left);
    RuntimeVal right;
@@ -114,11 +301,10 @@ RuntimeVal Interpreter::evaluateComparison(Expr* expr) {
          break;
       }
       default: {
-         result = left;
+         resultVal = left;
       }
    }
-   return result;
-   
+   return resultVal;
 }
 
 RuntimeVal Interpreter::evaluateBinary(Expr* expr) {
@@ -161,8 +347,6 @@ RuntimeVal Interpreter::evaluateTerm(Expr* expr) {
          break;
       }
       case TokenKind::SLASH : {
-         if (right == 0)
-            _logger.panic("Dividing by 0 is not allowed");
          result = left / right;
          break;
       }
@@ -177,25 +361,31 @@ RuntimeVal Interpreter::evaluateUnary(Expr* expr) {
    UnaryExpr* uexpr = (UnaryExpr*) expr;
 
    RuntimeVal right = this->evaluatePrimary(&uexpr->right);
-
+   
    if (uexpr->oper.kind == TokenKind::MINUS)
-      right *= -1;
+      right.numberValue *= -1;
 
    return right;
 }
 
 RuntimeVal Interpreter::evaluatePrimary(PrimaryExpr* expr) {
    PrimaryExpr* pexpr = (PrimaryExpr*) expr;
-   RuntimeVal result = 0;
+   RuntimeVal result;
    
    if (pexpr->expr != nullptr)
       return this->evaluate(pexpr->expr);
 
    switch (pexpr->value.kind) {
       case TokenKind::NUMBER : {
-         result = std::stod(pexpr->value.lexeme);
+         result.setNumber(std::stod(pexpr->value.lexeme));
          break;
       }
+
+      case TokenKind::STRING: {
+          result.setString(pexpr->value.lexeme);
+          break;
+      }
+
       case TokenKind::IDENT : {
          if (this->variables.find(pexpr->value.lexeme) == this->variables.end())
             _logger.panic("Use of ndeclared variable : " + pexpr->value.lexeme);
@@ -213,6 +403,7 @@ RuntimeVal Interpreter::evaluatePrimary(PrimaryExpr* expr) {
 void Interpreter::dumpVars() {
    _logger.debug("VARIABLES DUMP");
    for (const auto& var : variables) {
-      std::cout << var.first << " : " << var.second << std::endl;
+      std::cout << var.first << " : " ;
+      this->console.printRuntimeValue(var.second);
    }
 }
